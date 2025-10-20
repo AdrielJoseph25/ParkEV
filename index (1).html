@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkEV - Smart Parking & Charging</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Lighter slate background */
+        }
+        .view { display: none; }
+        .view.active { display: block; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #fff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .login-bg {
+             background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+        }
+        .card {
+            @apply bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+        }
+        .icon-text {
+            @apply flex items-center text-sm text-gray-600;
+        }
+        .icon-text i {
+            @apply mr-2 w-5 text-center text-indigo-500;
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <div id="app" class="min-h-screen">
+
+        <header id="app-header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 hidden">
+            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-20">
+                    <div class="flex items-center">
+                        <span class="text-3xl font-extrabold text-indigo-900"><i class="fas fa-parking mr-2 text-blue-500"></i>ParkEV</span>
+                    </div>
+                    <div class="flex items-center gap-4 md:gap-6">
+                         <span id="welcome-message" class="text-gray-600 text-sm hidden md:inline"></span>
+                         <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg">
+                            <i class="fas fa-wallet text-indigo-600 text-xl"></i>
+                            <span id="wallet-balance" class="font-bold text-slate-800 text-sm">₹0.00</span>
+                            <button onclick="loadWallet()" class="ml-1 bg-green-500 text-white rounded-full w-6 h-6 text-sm flex items-center justify-center hover:bg-green-600 transition-colors" title="Load Wallet">+</button>
+                         </div>
+                         <div class="relative">
+                            <button onclick="openModal('messages-modal')" class="text-2xl text-gray-500 hover:text-indigo-600">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            <span id="message-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                         </div>
+                         <button onclick="showProfileView()" class="text-2xl text-gray-500 hover:text-indigo-600">
+                            <i class="fas fa-user-circle"></i>
+                         </button>
+                         <button onclick="handleLogout()" class="bg-indigo-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-900 transition-all">Logout</button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <div id="login-view" class="view active">
+                <div class="min-h-screen w-full login-bg flex flex-col justify-center items-center p-4">
+                    <div class="text-center mb-8">
+                         <h1 class="text-6xl font-extrabold text-white flex items-center">
+                            <i class="fas fa-parking mr-4 text-blue-400"></i>ParkEV
+                         </h1>
+                         <p class="text-indigo-200 mt-2">The Future of EV Charging and Parking</p>
+                    </div>
+                    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl">
+                        <h2 class="text-3xl font-bold text-center mb-2 text-slate-800">Welcome Back</h2>
+                        <p class="text-center text-gray-500 mb-8">Sign in to access your EV network.</p>
+                        <form id="login-form" class="space-y-4">
+                            <input type="email" placeholder="Email Address" class="w-full p-3 border border-gray-200 rounded-lg" required value="user@parkev.com">
+                            <input type="password" placeholder="Password" class="w-full p-3 border border-gray-200 rounded-lg" required value="user123">
+                            <button type="submit" class="w-full bg-indigo-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-900 transition-all duration-300">Sign In</button>
+                        </form>
+                        <p class="text-center mt-6 text-sm">
+                            No account? <a href="#" onclick="switchAuthView('signup')" class="font-medium text-blue-600 hover:text-blue-500">Sign Up</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="signup-view" class="view">
+                 <div class="min-h-screen w-full login-bg flex flex-col justify-center items-center p-4">
+                     <div class="text-center mb-8">
+                         <h1 class="text-6xl font-extrabold text-white flex items-center">
+                            <i class="fas fa-parking mr-4 text-blue-400"></i>ParkEV
+                         </h1>
+                     </div>
+                     <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-2xl">
+                        <h2 class="text-3xl font-bold text-center mb-2 text-slate-800">Create Account</h2>
+                        <p class="text-center text-gray-500 mb-8">Join the future of EV charging.</p>
+                        <form id="signup-form" class="space-y-4">
+                            <input type="text" id="signup-name" placeholder="Full Name" class="w-full p-3 border rounded-lg" required>
+                            <input type="email" id="signup-email" placeholder="Email Address" class="w-full p-3 border rounded-lg" required>
+                            <input type="password" id="signup-password" placeholder="Password" class="w-full p-3 border rounded-lg" required>
+                            <button type="submit" class="w-full bg-indigo-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-900 transition-all duration-300">Sign Up</button>
+                        </form>
+                        <p class="text-center mt-6 text-sm">
+                            Have an account? <a href="#" onclick="switchAuthView('login')" class="font-medium text-blue-600 hover:text-blue-500">Sign In</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app-view" class="view container mx-auto p-4 sm:p-6 lg:p-8 relative">
+                 <div id="low-balance-overlay" class="absolute inset-0 bg-slate-200/80 backdrop-blur-sm z-30 hidden items-center justify-center text-center p-8" >
+                    <div class="bg-white p-8 rounded-xl shadow-lg">
+                        <i class="fas fa-exclamation-triangle text-5xl text-yellow-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-slate-800">Low Wallet Balance</h2>
+                        <p class="text-slate-600 mt-2 mb-6">Your wallet balance is below the ₹1,000.00 minimum. <br>Please load your wallet to continue using ParkEV services.</p>
+                        <button onclick="loadWallet()" class="bg-green-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-3 mx-auto">
+                           <i class="fas fa-plus-circle"></i> Load Wallet
+                        </button>
+                    </div>
+                 </div>
+                 
+                <div id="user-dashboard-view">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
+                        <h1 class="text-4xl font-bold text-slate-800">Dashboard</h1>
+                        <button onclick="openModal('journey-modal')" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-route"></i>
+                            <span>Plan with JourneyIQ</span>
+                        </button>
+                    </div>
+                    <div class="card mb-8">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                             <div class="lg:col-span-1 h-96 lg:h-[600px] flex flex-col">
+                                <h2 class="text-2xl font-semibold mb-4 text-slate-700">Find Spots by City</h2>
+                                <form id="search-form" class="flex gap-2 mb-4">
+                                    <input id="search-input" type="text" placeholder="e.g., Mysuru" class="w-full p-2 border rounded-lg">
+                                    <button type="submit" class="bg-indigo-800 text-white px-4 rounded-lg hover:bg-indigo-900"><i class="fas fa-search"></i></button>
+                                </form>
+                                <div id="parking-list" class="space-y-4 overflow-y-auto no-scrollbar flex-grow p-1"></div>
+                            </div>
+                            <div class="lg:col-span-1 h-96 lg:h-[600px] rounded-xl shadow-lg overflow-hidden">
+                                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d248849.5665934278!2d77.46612542250193!3d12.95395998682855!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1664188331891!5m2!1sen!2sin" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="card">
+                            <h2 class="text-2xl font-semibold mb-4 text-slate-700"><i class="fas fa-book-bookmark mr-2 text-indigo-500"></i>My Bookings</h2>
+                            <div id="my-bookings-list" class="space-y-4 max-h-[400px] overflow-y-auto no-scrollbar"></div>
+                        </div>
+                         <div class="card">
+                            <h2 class="text-2xl font-semibold mb-4 text-slate-700"><i class="fas fa-clock-rotate-left mr-2 text-indigo-500"></i>My Queued Spots</h2>
+                            <div id="my-queues-list" class="space-y-4 max-h-[400px] overflow-y-auto no-scrollbar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="admin-view" class="hidden card">
+                     <h1 class="text-4xl font-bold mb-8 text-slate-800">Admin Dashboard</h1>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
+                         <div class="bg-slate-50 p-6 rounded-lg text-center">
+                            <h3 class="text-gray-500">Total Listed Spots</h3>
+                            <p class="text-5xl font-bold mt-2" id="admin-total-spots">0</p>
+                        </div>
+                         <div class="bg-slate-50 p-6 rounded-lg text-center">
+                            <h3 class="text-gray-500">Pending Approvals</h3>
+                            <p class="text-5xl font-bold mt-2" id="admin-pending-approvals">0</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4">Peer-to-Peer Listing Approvals</h2>
+                        <div id="approval-list" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="profile-view" class="view container mx-auto p-4 sm:p-6 lg:p-8">
+                <button onclick="showAppView()" class="mb-8 bg-white px-4 py-2 rounded-lg shadow hover:shadow-lg transition-shadow flex items-center gap-2 text-gray-700">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Dashboard
+                </button>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1">
+                        <div class="card">
+                            <h2 class="text-2xl font-bold mb-4 text-slate-800">My Profile</h2>
+                            
+                            <div class="border-t pt-4 mt-4">
+                                <h3 class="text-xl font-bold mb-2 text-indigo-700">ParkEV Rewards</h3>
+                                <div class="space-y-1">
+                                    <p class="text-sm font-medium text-gray-700">Current Points: <span id="profile-points" class="text-lg font-bold text-green-600">0</span></p>
+                                    <p class="text-sm font-medium text-gray-700">Redeemable Value: <span id="profile-redeem-value" class="text-lg font-bold text-green-600">₹0.00</span></p>
+                                </div>
+                            </div>
+                            <div class="space-y-4 border-t pt-4 mt-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500">Name</label>
+                                    <div id="name-display-container" class="flex items-center justify-between">
+                                        <p id="profile-page-name" class="text-lg text-slate-900"></p>
+                                        <button onclick="toggleNameEdit(true)" class="text-sm text-blue-600 hover:underline">Edit</button>
+                                    </div>
+                                    <div id="name-edit-container" class="hidden">
+                                        <input type="text" id="profile-name-input" class="w-full p-2 border rounded-lg">
+                                        <div class="flex gap-2 mt-2">
+                                            <button onclick="saveNewName()" class="w-full bg-green-500 text-white py-1 rounded-lg hover:bg-green-600">Save</button>
+                                            <button onclick="toggleNameEdit(false)" class="w-full bg-gray-200 py-1 rounded-lg hover:bg-gray-300">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500">Email</label>
+                                    <p id="profile-page-email" class="text-lg text-slate-900"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="card">
+                            <h2 class="text-2xl font-semibold mb-4 text-slate-700"><i class="fas fa-plus-circle mr-2 text-indigo-500"></i>My Listed Spots</h2>
+                            <div id="my-spots-list" class="space-y-4 max-h-60 overflow-y-auto no-scrollbar mb-6"></div>
+                            <h3 class="text-xl font-semibold mb-4 border-t pt-6">List a New Spot</h3>
+                            <form id="add-spot-form" class="space-y-4">
+                               <input name="name" type="text" placeholder="Location Name" class="w-full p-2 border rounded-lg" required>
+                               <input name="address" type="text" placeholder="Address (incl. city)" class="w-full p-2 border rounded-lg" required>
+                               <select name="chargerType" id="add-charger-type" class="w-full p-2 border rounded-lg bg-white">
+                                   <option value="None">No Charger (Parking Only)</option>
+                                   <option value="AC Slow">AC Slow (up to 7kW)</option>
+                                   <option value="AC Fast">AC Fast (7-22kW)</option>
+                                   <option value="DC">DC Fast Charger (50kW+)</option>
+                               </select>
+                               <div>
+                                   <label id="price-label" for="add-price" class="block text-sm font-medium text-gray-700">Rate per hour (₹)</label>
+                                   <input name="rate" id="add-price" type="number" placeholder="e.g., 50" class="w-full p-2 border rounded-lg" required>
+                               </div>
+                               <div>
+                                   <label for="add-overnight-rate" class="block text-sm font-medium text-gray-700">Overnight Rate (10pm - 6am) (₹)</label>
+                                   <input name="overnightRate" id="add-overnight-rate" type="number" placeholder="e.g., 300" class="w-full p-2 border rounded-lg">
+                               </div>
+                               <select name="vehicleType" class="w-full p-2 border rounded-lg bg-white">
+                                   <option value="Both">Cars & Bikes</option> <option value="Car">Cars Only</option> <option value="Bike">Bikes Only</option>
+                               </select>
+                               <button type="submit" class="w-full bg-indigo-800 text-white py-2 rounded-lg hover:bg-indigo-900 transition">Add Spot for Approval</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="chatbot" class="fixed bottom-5 right-5 z-50">
+        <div id="chatbot-window" class="chatbot-container bg-white w-80 h-96 rounded-xl shadow-2xl flex flex-col hidden fade-in">
+            <div class="bg-indigo-900 text-white p-3 rounded-t-xl flex justify-between items-center">
+                <h3 class="font-semibold">ParkEV Assistant</h3>
+                <button onclick="toggleChatbot()" class="text-white text-xl">×</button>
+            </div>
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4">
+                 <div class="bg-gray-200 p-3 rounded-lg self-start max-w-xs"><p class="text-sm">Hello! How can I help? Please select a question below.</p></div>
+            </div>
+             <div id="chat-questions" class="p-2 border-t border-gray-200 overflow-y-auto no-scrollbar max-h-40"></div>
+        </div>
+        <button id="chatbot-toggle" onclick="toggleChatbot()" class="bg-indigo-800 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-3xl hover:bg-indigo-900 transition-all">
+            <i class="fas fa-comment-dots"></i>
+        </button>
+    </div>
+
+    <div id="journey-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg fade-in">
+             <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-slate-800">JourneyIQ Planner</h2>
+                <button onclick="closeModal('journey-modal')" class="text-gray-400 hover:text-gray-800 text-3xl">×</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="block text-sm font-medium text-gray-700">Source</label><input type="text" id="journey-source" class="mt-1 w-full p-2 border rounded-lg" placeholder="e.g., Bengaluru" value="Bengaluru"></div>
+                <div><label class="block text-sm font-medium text-gray-700">Destination</label><input type="text" id="journey-destination" class="mt-1 w-full p-2 border rounded-lg" placeholder="e.g., Hubballi" value="Hubballi"></div>
+                <div><label class="block text-sm font-medium text-gray-700">Current Range (km)</label><input type="number" id="journey-range" class="mt-1 w-full p-2 border rounded-lg" placeholder="e.g., 300" value="200"></div>
+                <div><label class="block text-sm font-medium text-gray-700">Current Battery (%)</label><input type="number" id="journey-battery" class="mt-1 w-full p-2 border rounded-lg" placeholder="e.g., 80"></div>
+            </div>
+            <button id="journey-calculate-btn" onclick="calculateJourney()" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+                <span>Calculate My Journey</span>
+            </button>
+            <div id="journey-result" class="mt-6"></div>
+        </div>
+    </div>
+    <div id="booking-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Book a Time Slot</h2>
+                <button onclick="closeModal('booking-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
+            </div>
+            <p id="current-time-display" class="text-center text-sm text-gray-500 mb-4"></p>
+            <div id="modal-spot-details" class="mb-6"></div>
+            <div id="time-slots-container" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+    <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4"><div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">Spot Information</h2><button onclick="closeModal('info-modal')" class="text-gray-500 hover:text-gray-800 text-2xl">×</button></div><div id="modal-info-details" class="space-y-3"></div></div></div>
+    <div id="messages-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg fade-in">
+             <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-slate-800">My Messages</h2>
+                <button onclick="closeModal('messages-modal')" class="text-gray-400 hover:text-gray-800 text-3xl">×</button>
+            </div>
+            <div id="messages-list" class="space-y-4 max-h-[60vh] overflow-y-auto">
+                </div>
+        </div>
+    </div>
+
+    <div id="end-session-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md fade-in">
+            <h2 class="text-2xl font-bold mb-4">End Session Report</h2>
+            <p class="text-sm text-gray-600 mb-6">Please provide the energy consumed to complete the session. This will be sent for approval before payment is deducted.</p>
+            <form id="end-session-form">
+                <div>
+                    <label for="units-used" class="block text-sm font-medium text-gray-700">Units Used (kWh)</label>
+                    <input type="number" id="units-used" step="0.01" class="mt-1 w-full p-2 border rounded-lg" placeholder="e.g., 12.5" required>
+                </div>
+                <div class="mt-4">
+                    <label for="usage-image" class="block text-sm font-medium text-gray-700">Upload Proof Image</label>
+                    <input type="file" id="usage-image" accept="image/*" class="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                </div>
+                <button type="submit" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // --- DATA & STATE ---
+        const MIN_WALLET_BALANCE = 1000;
+        let users = [
+            { id: 1, name: "Admin", email: 'admin@parkev.com', password: 'admin123', isAdmin: true, messages: [], points: 0, wallet: 99999 },
+            { id: 2, name: "Main User", email: 'user@parkev.com', password: 'user123', isAdmin: false, messages: [], points: 100, wallet: 2500 },
+            { id: 3, name: "Test User", email: 'test@parkev.com', password: 'test123', isAdmin: false, messages: [], points: 0, wallet: 1500 },
+            { id: 4, name: "Aarav Sharma", email: 'dummy1@parkev.com', password: 'dummy123', isAdmin: false, messages: [], points: 0, wallet: 4000 },
+            { id: 5, name: "Priya Patel", email: 'dummy2@parkev.com', password: 'dummy123', isAdmin: false, messages: [], points: 0, wallet: 500 },
+            { id: 6, name: "Rohan Das", email: 'dummy3@parkev.com', password: 'dummy123', isAdmin: false, messages: [], points: 0, wallet: 3000 },
+            { id: 7, name: "Sanya Gupta", email: 'dummy4@parkev.com', password: 'dummy123', isAdmin: false, messages: [], points: 0, wallet: 1800 },
+        ];
+        
+        const distances = {"bengaluru-mysuru":145,"bengaluru-hassan":182,"bengaluru-tumakuru":70,"bengaluru-chitradurga":202,"bengaluru-hubballi":411,"bengaluru-belagavi":505,"bengaluru-mangaluru":352,"bengaluru-ballari":311,"bengaluru-shivamogga":302,"mysuru-hassan":115,"mysuru-mangaluru":255,"hassan-mangaluru":170,"hassan-shivamogga":105,"hubballi-belagavi":100,"hubballi-ballari":208,"hubballi-vijayapura":200,"tumakuru-chitradurga":132,"tumakuru-shivamogga":235};
+        const routes = {"bengaluru-hubballi":["tumakuru","chitradurga"],"bengaluru-belagavi":["tumakuru","chitradurga","hubballi"],"bengaluru-mangaluru":["hassan"],"bengaluru-ballari":["tumakuru","chitradurga"],"bengaluru-shivamogga":["tumakuru"],"mysuru-mangaluru":["hassan"]};
+        const routeCities = ["mysuru", "hassan", "tumakuru", "chitradurga", "hubballi", "belagavi", "mangaluru", "ballari", "shivamogga", "vijayapura", "bengaluru"];
+
+        // --- Generate User-Specific Spots ---
+        const newUserSpots = [];
+        const userIdsForSpots = [2, 3, 4, 5, 6, 7];
+        let spotIdCounter = 1;
+
+        userIdsForSpots.forEach(uid => {
+            const owner = users.find(u => u.id === uid);
+            for (let i = 1; i <= 10; i++) {
+                const city = routeCities[Math.floor(Math.random() * routeCities.length)];
+                const chargerTypes = ['None', 'AC Slow', 'AC Fast', 'DC'];
+                const chargerType = chargerTypes[Math.floor(Math.random() * chargerTypes.length)];
+                let rate;
+                if (chargerType === 'None') rate = Math.floor(Math.random() * 40) + 30; // Parking rate /hr
+                else if (chargerType === 'AC Slow') rate = Math.floor(Math.random() * 5) + 12; // Charging rate /kWh
+                else if (chargerType === 'AC Fast') rate = Math.floor(Math.random() * 6) + 17; // Charging rate /kWh
+                else rate = Math.floor(Math.random() * 6) + 23; // Charging rate /kWh
+
+                newUserSpots.push({ 
+                    id: spotIdCounter++, 
+                    name: `${owner.name.split(' ')[0]}'s Spot #${i}`, 
+                    address: `${Math.floor(Math.random()*500)+1} Main, ${city}`, 
+                    rate, 
+                    status: 'Available', 
+                    type: 'P2P', 
+                    chargerType, 
+                    vehicleType: ['Car', 'Bike', 'Both'][Math.floor(Math.random()*3)], 
+                    ownerId: owner.id, 
+                    approval: 'approved', 
+                    queue: {},
+                    bookings: {},
+                    overnightRate: Math.floor(Math.random() * 201) + 250
+                });
+            }
+        });
+
+        let spots = [...newUserSpots];
+        
+        const chatbotQuestions = [
+            { question: "What is JourneyIQ?", answer: "JourneyIQ is our intelligent trip planner! Enter your source, destination, and vehicle stats, and it will calculate if you need to charge and recommend the best spots along your route." },
+            { question: "How does my wallet work?", answer: `You need to maintain a minimum balance of ₹${MIN_WALLET_BALANCE}. When your session report is approved, the cost is auto-deducted. If your balance is low, services will be disabled.`},
+            { question: "What if a spot is busy?", answer: "You can join a queue for any booked spot. When it's your turn, you'll get a notification in your message inbox (the envelope icon in the header)." },
+        ];
+
+        let currentUser = null;
+        let timeUpdateInterval = null; 
+
+        function formatTime(hour) {
+            if (hour === 'overnight') return 'Overnight (10pm - 6am)';
+            const h = parseInt(hour);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const displayHour = h % 12 === 0 ? 12 : h % 12;
+            const nextHour = (h + 1) % 12 === 0 ? 12 : (h + 1) % 12;
+            const nextAmpm = (h + 1) >= 12 && (h+1) < 24 ? 'PM' : 'AM';
+            return `${displayHour}:00 ${ampm} - ${nextHour}:00 ${nextAmpm}`;
+        }
+
+        function switchView(viewName) { 
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
+            const mainContent = document.querySelector('main');
+            if (viewName === 'login' || viewName === 'signup') {
+                mainContent.classList.remove('container', 'mx-auto', 'p-4', 'sm:p-6', 'lg:p-8');
+            } else {
+                mainContent.classList.add('container', 'mx-auto', 'p-4', 'sm:p-6', 'lg:p-8');
+            }
+            document.getElementById(`${viewName}-view`).classList.add('active'); 
+        }
+        function switchAuthView(viewName) { switchView(viewName); }
+
+        function showAppView() {
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('welcome-message').textContent = `Welcome, ${currentUser.name.split(' ')[0]}`;
+            
+            switchView('app');
+            
+            if (currentUser.isAdmin) {
+                document.getElementById('user-dashboard-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                document.getElementById('profile-view').classList.add('hidden');
+            } else {
+                document.getElementById('user-dashboard-view').classList.remove('hidden');
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('profile-view').classList.add('hidden');
+                updateWalletDisplay();
+            }
+            renderAll();
+        }
+
+        function showProfileView() {
+            renderProfilePage();
+            switchView('profile');
+        }
+
+        document.getElementById('login-form').addEventListener('submit', function(e) { e.preventDefault(); const email = e.target.elements[0].value; const password = e.target.elements[1].value; const user = users.find(u => u.email === email && u.password === password); if (user) { currentUser = user; showAppView(); } else { alert('Invalid credentials.'); } });
+        
+        document.getElementById('signup-form').addEventListener('submit', function(e) { e.preventDefault(); const name = document.getElementById('signup-name').value; const email = document.getElementById('signup-email').value; const password = document.getElementById('signup-password').value; if (users.some(u => u.email === email)) { alert('Email already exists.'); return; } const newUser = { id: users.length + 1, name, email, password, isAdmin: false, messages: [], points: 0, wallet: MIN_WALLET_BALANCE }; users.push(newUser); currentUser = newUser; showAppView(); });
+        
+        function handleLogout() { currentUser = null; document.getElementById('app-header').classList.add('hidden'); document.getElementById('login-form').reset(); document.getElementById('signup-form').reset(); switchView('login'); }
+
+        function renderAll(searchTerm = '') { 
+            if (!currentUser) return; 
+            if (currentUser.isAdmin) { 
+                renderAdminView(); 
+            } else { 
+                checkAndToggleLowBalanceOverlay();
+                renderUserDashboard(searchTerm); 
+            } 
+            updateMessageBadge();
+        }
+        function renderUserDashboard(searchTerm = '') { renderAvailableSpots(searchTerm); renderMyBookings(); renderMyQueues(); }
+        
+        function renderAvailableSpots(searchTerm = '') {
+            const list = document.getElementById('parking-list');
+            list.innerHTML = '';
+            const filteredSpots = spots.filter(s => s.approval === 'approved' && s.address.toLowerCase().includes(searchTerm.toLowerCase()));
+            if (filteredSpots.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 text-center mt-4">${searchTerm ? `No spots found in "${searchTerm}"` : 'Search for a spot by city.'}</p>`;
+                return;
+            }
+            
+            filteredSpots.forEach(spot => {
+                const totalSlots = spot.overnightRate ? 17 : 16;
+                const isAvailable = Object.keys(spot.bookings).length < totalSlots;
+                spot.status = isAvailable ? 'Available' : 'Booked';
+
+                const priceUnit = spot.chargerType === 'None' ? '/hr' : '/kWh';
+                let buttonsHtml = `<button onclick="openModal('booking-modal', ${spot.id})" class="text-xs bg-indigo-800 text-white py-1 px-3 rounded-md hover:bg-indigo-900">View Slots</button>`;
+
+                const card = `
+                    <div class="border border-gray-200 rounded-lg p-3 bg-white hover:border-blue-500 transition-all">
+                        <div class="flex justify-between items-start">
+                            <div><h3 class="font-bold text-sm">${spot.name}</h3><p class="text-xs text-gray-500">${spot.address}</p></div>
+                            <span class="text-xs font-semibold py-1 px-2 rounded-full ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${spot.status}</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-lg font-bold text-slate-800">₹${spot.rate}<span class="text-sm font-medium text-gray-500">${priceUnit}</span></span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openInfoModal(${spot.id})" class="text-xs bg-gray-200 text-gray-700 py-1 px-2 rounded-md hover:bg-gray-300">Info</button>
+                                ${buttonsHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', card);
+            });
+        }
+        
+        function renderMyBookings() {
+            const list = document.getElementById('my-bookings-list'); 
+            list.innerHTML = ''; 
+            const myBookings = [];
+            spots.forEach(spot => {
+                Object.entries(spot.bookings).forEach(([timeslot, bookingDetails]) => {
+                    if (bookingDetails.userId === currentUser.id) {
+                        myBookings.push({ spot, timeslot, ...bookingDetails });
+                    }
+                });
+            });
+
+            if (myBookings.length === 0) { 
+                list.innerHTML = '<p class="text-gray-500">You have no active bookings.</p>'; 
+                return; 
+            }
+            myBookings.forEach(booking => { 
+                let buttonsHtml = '';
+                const currentHour = new Date().getHours();
+                const slotHour = parseInt(booking.timeslot);
+                
+                switch(booking.sessionState) {
+                    case 'active':
+                        buttonsHtml = `<button onclick="triggerEndBookingSession(${booking.spot.id}, '${booking.timeslot}')" class="bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm font-medium py-1 px-3 rounded-md">End Session</button>`;
+                        break;
+                    case 'pending_approval':
+                        buttonsHtml = `<span class="text-sm font-semibold text-yellow-600">Awaiting Approval</span>`;
+                        break;
+                    case 'rejected':
+                        buttonsHtml = `<div class="flex flex-col items-end gap-2"><span class="text-sm font-semibold text-red-600">Report Rejected</span><button onclick="triggerReupload(${booking.spot.id}, '${booking.timeslot}')" class="bg-yellow-400 text-yellow-900 hover:bg-yellow-500 text-sm font-medium py-1 px-3 rounded-md">Re-upload</button></div>`;
+                        break;
+                    case 'booked':
+                    default:
+                        const canStartSession = currentHour >= slotHour;
+                        const disabledAttr = canStartSession ? '' : 'disabled';
+                        const disabledClasses = canStartSession ? 'hover:bg-green-200' : 'opacity-50 cursor-not-allowed';
+                        buttonsHtml = `
+                            <button onclick="startSession(${booking.spot.id}, '${booking.timeslot}')" class="bg-green-100 text-green-800 text-sm font-medium py-1 px-3 rounded-md ${disabledClasses}" ${disabledAttr}>Start Session</button>
+                            <button onclick="cancelBooking(${booking.spot.id}, '${booking.timeslot}')" class="bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium py-1 px-3 rounded-md">Cancel Booking</button>
+                        `;
+                        break;
+                }
+
+                const card = `
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div>
+                            <h3 class="font-bold">${booking.spot.name}</h3>
+                            <p class="text-sm text-gray-500">${booking.spot.address}</p>
+                            <p class="text-sm font-semibold text-indigo-700 mt-1">${formatTime(booking.timeslot)}</p>
+                        </div>
+                        <div class="flex justify-end items-center gap-2 mt-3">
+                            ${buttonsHtml}
+                        </div>
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', card);
+            });
+        }
+        
+        function renderMyQueues() {
+            const list = document.getElementById('my-queues-list');
+            list.innerHTML = '';
+            const myQueuedSpots = [];
+            spots.forEach(spot => {
+                Object.entries(spot.queue).forEach(([timeslot, queueList]) => {
+                    if (queueList.includes(currentUser.id)) {
+                        const position = queueList.indexOf(currentUser.id) + 1;
+                        myQueuedSpots.push({ spot, timeslot, position });
+                    }
+                });
+            });
+            
+            if (myQueuedSpots.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">You are not in any queues.</p>';
+                return;
+            }
+            myQueuedSpots.forEach(queueItem => {
+                const card = `
+                    <div class="border rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-start">
+                             <div>
+                                <h3 class="font-bold">${queueItem.spot.name}</h3>
+                                <p class="text-sm text-gray-500">${queueItem.spot.address}</p>
+                                <p class="text-sm font-semibold text-indigo-700 mt-1">${formatTime(queueItem.timeslot)}</p>
+                            </div>
+                            <button onclick="leaveQueue(${queueItem.spot.id}, '${queueItem.timeslot}')" class="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 text-sm font-medium py-1 px-3 rounded-md">Leave</button>
+                        </div>
+                         <div class="text-right mt-2">
+                            <span class="text-sm font-semibold text-blue-800">Your Position: ${queueItem.position}</span>
+                        </div>
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', card);
+            });
+        }
+
+        function renderMyListedSpots() {
+            const list = document.getElementById('my-spots-list'); list.innerHTML = ''; const mySpots = spots.filter(s => s.ownerId === currentUser.id);
+            if (mySpots.length === 0) { list.innerHTML = '<p class="text-gray-500">You haven\'t listed any spots.</p>'; return; }
+            mySpots.forEach(spot => {
+                 let statusBadge;
+                if (spot.approval === 'pending') { statusBadge = `<span class="text-xs font-semibold py-1 px-2 rounded-full bg-yellow-100 text-yellow-800">Pending</span>`; } 
+                else { 
+                    const totalSlots = spot.overnightRate ? 17 : 16;
+                    const isAvailable = Object.keys(spot.bookings).length < totalSlots;
+                    spot.status = isAvailable ? 'Available' : 'Booked';
+                    statusBadge = `<span class="text-xs font-semibold py-1 px-2 rounded-full ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${spot.status}</span>`; 
+                }
+                const card = `<div class="border rounded-lg p-4 bg-gray-50"><div class="flex justify-between items-start"><div><h3 class="font-bold">${spot.name}</h3><p class="text-sm text-gray-500">${spot.address}</p></div><button onclick="deleteListing(${spot.id})" class="bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium py-1 px-3 rounded-md">Delete</button></div><div class="mt-2 text-right">${statusBadge}</div></div>`;
+                list.insertAdjacentHTML('beforeend', card);
+            });
+        }
+        
+        function getRedeemableValue(points) {
+            const redeemablePoints = Math.floor(points / 20) * 20;
+            return (redeemablePoints / 20) * 5;
+        }
+
+        function renderProfilePage() {
+            document.getElementById('profile-page-name').textContent = currentUser.name;
+            document.getElementById('profile-page-email').textContent = currentUser.email;
+            document.getElementById('profile-name-input').value = currentUser.name;
+            toggleNameEdit(false);
+            renderMyListedSpots();
+            
+            const redeemValue = getRedeemableValue(currentUser.points);
+            document.getElementById('profile-points').textContent = currentUser.points;
+            document.getElementById('profile-redeem-value').textContent = `₹${redeemValue.toFixed(2)}`;
+        }
+
+        function toggleNameEdit(isEditing) {
+            document.getElementById('name-display-container').style.display = isEditing ? 'none' : 'flex';
+            document.getElementById('name-edit-container').style.display = isEditing ? 'block' : 'none';
+        }
+
+        function saveNewName() {
+            const newName = document.getElementById('profile-name-input').value.trim();
+            if (newName) {
+                currentUser.name = newName;
+                document.getElementById('welcome-message').textContent = `Welcome, ${currentUser.name.split(' ')[0]}`;
+                renderProfilePage();
+            }
+        }
+
+        function renderAdminView() {
+            document.getElementById('admin-total-spots').textContent = spots.length;
+            const pendingSpots = spots.filter(s => s.approval === 'pending');
+            document.getElementById('admin-pending-approvals').textContent = pendingSpots.length;
+            const approvalList = document.getElementById('approval-list');
+            approvalList.innerHTML = '';
+            if (pendingSpots.length === 0) { approvalList.innerHTML = '<p class="text-gray-500">No pending approvals.</p>'; return; }
+            pendingSpots.forEach(spot => {
+                 const owner = users.find(u => u.id === spot.ownerId);
+                 const priceUnit = spot.chargerType === 'None' ? '/hr' : '/kWh';
+                 const item = `<div class="border rounded-lg p-4 bg-white shadow-sm flex justify-between items-center"><div><h4 class="font-semibold">${spot.name}</h4><p class="text-sm text-gray-600">${spot.address} by ${owner ? owner.email : 'Unknown'}</p><p class="text-sm font-medium text-gray-800">₹${spot.rate}${priceUnit}</p></div><div class="flex space-x-2"><button onclick="approveSpot(${spot.id})" class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600">Approve</button><button onclick="rejectSpot(${spot.id})" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Reject</button></div></div>`;
+                approvalList.insertAdjacentHTML('beforeend', item);
+            });
+        }
+        
+        function openModal(modalId, spotId = null) { 
+            if (modalId === 'booking-modal' && spotId) {
+                const spot = spots.find(s => s.id === spotId);
+                document.getElementById('modal-spot-details').innerHTML = `<p><strong>Location:</strong> ${spot.name}</p><p><strong>Address:</strong> ${spot.address}</p>`;
+                
+                const timeDisplay = document.getElementById('current-time-display');
+                const updateTime = () => { timeDisplay.textContent = `Current Time: ${new Date().toLocaleString()}`; };
+                updateTime();
+                timeUpdateInterval = setInterval(updateTime, 1000);
+
+                const slotsContainer = document.getElementById('time-slots-container');
+                slotsContainer.innerHTML = '';
+                let slotsHtml = '';
+                
+                for (let i = 6; i <= 21; i++) {
+                    slotsHtml += generateSlotHtml(spot, i);
+                }
+                
+                if (spot.overnightRate) {
+                    slotsHtml += generateSlotHtml(spot, 'overnight');
+                }
+
+                slotsContainer.innerHTML = slotsHtml;
+            }
+            if(modalId === 'journey-modal') { document.getElementById('journey-result').innerHTML = ''; }
+            if (modalId === 'messages-modal') { renderMessages(); }
+            document.getElementById(modalId).style.display = 'flex'; 
+        }
+
+        function generateSlotHtml(spot, timeslot) {
+            const priceUnit = spot.chargerType === 'None' ? '/hr' : '/kWh';
+            const rate = timeslot === 'overnight' ? spot.overnightRate : spot.rate;
+            const priceText = timeslot === 'overnight' ? `(₹${rate})` : `(₹${rate}${priceUnit})`;
+            const currentHour = new Date().getHours();
+            const isPastSlot = timeslot !== 'overnight' && parseInt(timeslot) < currentHour;
+
+            const committedFunds = calculateCommittedFunds();
+            let estimatedCostOfNewSlot = 0;
+            if (timeslot === 'overnight') {
+                estimatedCostOfNewSlot = spot.overnightRate || 0;
+            } else if (spot.chargerType === 'None') {
+                estimatedCostOfNewSlot = spot.rate;
+            } else {
+                estimatedCostOfNewSlot = spot.rate * 40; // Assume 40kWh consumption
+            }
+            
+            const hasSufficientFunds = currentUser.wallet >= (committedFunds + estimatedCostOfNewSlot);
+            
+            const booking = spot.bookings[timeslot];
+            let buttonHtml = '';
+            let containerClasses = "bg-gray-50";
+
+            if (isPastSlot) {
+                buttonHtml = `<button disabled class="bg-gray-300 text-gray-500 py-1 px-3 text-sm rounded-md cursor-not-allowed">Past</button>`;
+                containerClasses = "bg-gray-200 opacity-60";
+            } else if (!booking) {
+                if(hasSufficientFunds) {
+                    buttonHtml = `<button onclick="confirmBooking(${spot.id}, '${timeslot}')" class="bg-indigo-800 text-white py-1 px-3 text-sm rounded-md hover:bg-indigo-900">Book</button>`;
+                } else {
+                    buttonHtml = `<button disabled title="Insufficient funds to cover total committed cost." class="bg-gray-300 text-gray-500 py-1 px-3 text-sm rounded-md cursor-not-allowed">Book</button>`;
+                }
+            } else if (booking.userId === currentUser.id) {
+                buttonHtml = `<span class="font-semibold text-green-600">Your Booking</span>`;
+            } else {
+                const queueList = spot.queue[timeslot] || [];
+                const position = queueList.indexOf(currentUser.id);
+                if (position > -1) {
+                    buttonHtml = `<button disabled class="bg-gray-400 text-white py-1 px-3 text-sm rounded-md">In Queue (#${position + 1})</button>`;
+                } else {
+                    if (hasSufficientFunds) {
+                        buttonHtml = `<button onclick="joinQueue(${spot.id}, '${timeslot}')" class="bg-blue-600 text-white py-1 px-3 text-sm rounded-md hover:bg-blue-700">Join Queue</button>`;
+                    } else {
+                         buttonHtml = `<button disabled title="Insufficient funds to cover total committed cost." class="bg-gray-300 text-gray-500 py-1 px-3 text-sm rounded-md cursor-not-allowed">Join Queue</button>`;
+                    }
+                }
+            }
+
+            return `<div class="border rounded-lg p-3 flex justify-between items-center ${containerClasses}">
+                        <div>
+                            <p class="font-semibold">${formatTime(timeslot)}</p>
+                            <p class="text-sm text-gray-600">${priceText}</p>
+                        </div>
+                        <div class="w-32 text-right">${buttonHtml}</div>
+                    </div>`;
+        }
+        
+        function openInfoModal(spotId) { const spot = spots.find(s => s.id === spotId); const priceUnit = spot.chargerType === 'None' ? ' per hour' : ' per kWh'; document.getElementById('modal-info-details').innerHTML = `<div class="space-y-2"><div class="icon-text"><i class="fas fa-map-marker-alt"></i><span>${spot.address}</span></div><div class="icon-text"><i class="fas fa-bolt"></i><span>Charger: <b class="ml-1">${spot.chargerType.replace(' ', '\u00A0')}</b></span></div><div class="icon-text"><i class="fas fa-tag"></i><span>Price: <b class="ml-1">₹${spot.rate} ${priceUnit}</b></span></div><div class="icon-text"><i class="fas fa-car"></i><span>Supports: <b class="ml-1">${spot.vehicleType}</b></span></div></div>`; document.getElementById('info-modal').style.display = 'flex'; }
+        
+        function closeModal(modalId) { 
+            if (modalId === 'booking-modal' && timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+                timeUpdateInterval = null;
+            }
+            document.getElementById(modalId).style.display = 'none'; 
+        }
+
+        function getRouteKey(source, destination) {
+            const s = source.toLowerCase().trim();
+            const d = destination.toLowerCase().trim();
+            if (s === d) return null;
+            const key = `${s}-${d}`;
+            const reverseKey = `${d}-${s}`;
+            if (distances[key]) return key;
+            if (distances[reverseKey]) return reverseKey;
+            return null;
+        }
+
+        function calculateJourney() {
+            const btn = document.getElementById('journey-calculate-btn');
+            btn.innerHTML = `<div class="spinner"></div>`;
+            btn.disabled = true;
+            setTimeout(() => {
+                const source = document.getElementById('journey-source').value;
+                const destination = document.getElementById('journey-destination').value;
+                const range = parseInt(document.getElementById('journey-range').value);
+                const resultDiv = document.getElementById('journey-result');
+                if (!source || !destination || isNaN(range)) {
+                    resultDiv.innerHTML = `<p class="text-red-500">Please fill in all fields.</p>`;
+                } else {
+                    const key = getRouteKey(source, destination);
+                    if (!key) {
+                        resultDiv.innerHTML = `<div class="p-4 bg-red-100 text-red-700 rounded-lg"><p>Sorry, we don't have route data for this trip. Please enter major cities in Karnataka.</p></div>`;
+                    } else {
+                        const tripDistance = distances[key];
+                        if (range >= tripDistance) {
+                            resultDiv.innerHTML = `<div class="p-4 bg-green-100 text-green-700 rounded-lg"><p class="font-bold">Good to Go!</p><p>Your range of ${range}km is sufficient for the ${tripDistance}km trip to ${destination}.</p></div>`;
+                        } else {
+                            const intermediateCities = routes[key] || routes[key.split('-').reverse().join('-')] || [];
+                            const allPossibleStopCities = [destination.toLowerCase().trim(), ...intermediateCities];
+                            
+                            let recommendations = spots.filter(s =>
+                                allPossibleStopCities.some(city => s.address.toLowerCase().includes(city)) && s.chargerType !== 'None'
+                            ).sort((a, b) => (b.chargerType === 'DC') - (a.chargerType === 'AC Fast') - (a.chargerType === 'AC Slow'));
+                            
+                            let stopsNeeded = tripDistance > 350 ? 2 : 1;
+                            recommendations = recommendations.slice(0, stopsNeeded);
+
+                            if (recommendations.length === 0) {
+                                resultDiv.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-700 rounded-lg"><p class="font-bold">Charge Required!</p><p>Your range is insufficient, but we couldn't find any available charging spots on this route in our network.</p></div>`;
+                            } else {
+                                let recommendationsHtml = recommendations.map(spot => `<div class="mt-2 p-3 bg-gray-50 border rounded-lg"><h4 class="font-semibold">${spot.name}</h4><p class="text-sm text-gray-600">${spot.address}</p><div class="text-xs mt-1"><b>Charger:</b> ${spot.chargerType}</div><button onclick="bookRecommendedSpot(${spot.id})" class="mt-2 w-full bg-indigo-700 text-white py-1 rounded-md hover:bg-indigo-600 text-sm">View Available Slots</button></div>`).join('');
+                                resultDiv.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg"><p class="font-bold">Charge Required!</p><p>Your range is insufficient for the ${tripDistance}km trip. We recommend stopping at one of these spots:</p>${recommendationsHtml}</div>`;
+                            }
+                        }
+                    }
+                }
+                btn.innerHTML = `<span>Calculate My Journey</span>`;
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        function bookRecommendedSpot(spotId) { closeModal('journey-modal'); openModal('booking-modal', spotId); }
+
+        function confirmBooking(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            if (spot) {
+                const encodedAddress = encodeURIComponent(spot.address);
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+                window.open(mapsUrl, '_blank');
+
+                spot.bookings[timeslot] = { userId: currentUser.id, sessionState: 'booked' };
+                addMessage({ text: `Your booking for '${spot.name}' at ${formatTime(timeslot)} is confirmed.` });
+                closeModal('booking-modal');
+                renderAll();
+            }
+        }
+        
+        function startSession(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            if (spot && spot.bookings[timeslot]) {
+                const booking = spot.bookings[timeslot];
+                booking.sessionState = 'active';
+                booking.timeoutId = setTimeout(() => {
+                    alert(`Your session for '${spot.name}' has ended automatically after 1 hour.`);
+                    triggerEndBookingSession(spotId, timeslot);
+                }, 3600 * 1000);
+                renderAll();
+            }
+        }
+
+        function triggerEndBookingSession(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            if (!spot || !spot.bookings[timeslot]) return;
+
+            const booking = spot.bookings[timeslot];
+            if (booking.timeoutId) {
+                clearTimeout(booking.timeoutId);
+                delete booking.timeoutId;
+            }
+            
+            if (spot.chargerType !== 'None') { // ALL charging spots require usage report
+                const form = document.getElementById('end-session-form');
+                form.dataset.spotId = spotId;
+                form.dataset.timeslot = timeslot;
+                form.dataset.isReupload = 'false';
+                form.reset();
+                openModal('end-session-modal');
+            } else { // Parking-only spots have a flat rate and immediate deduction
+                const parkingCost = spot.rate;
+                currentUser.wallet -= parkingCost;
+                currentUser.points += 20;
+                addMessage({ text: `Your parking session at '${spot.name}' has ended. ₹${parkingCost.toFixed(2)} was deducted. You earned 20 points!`});
+                updateWalletDisplay();
+                delete spot.bookings[timeslot];
+                if (spot.queue[timeslot] && spot.queue[timeslot].length > 0) processQueue(spot.id, timeslot);
+                renderAll();
+            }
+        }
+
+        function triggerReupload(spotId, timeslot) {
+            const spot = spots.find(s => s.id === parseInt(spotId));
+            const booking = spot.bookings[timeslot];
+            const form = document.getElementById('end-session-form');
+            form.dataset.spotId = spotId;
+            form.dataset.timeslot = timeslot;
+            form.dataset.isReupload = 'true';
+            form.dataset.approvalMessageId = booking.approvalMessageId;
+            form.reset();
+            openModal('end-session-modal');
+        }
+        
+        function handleEndSessionSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const { spotId, timeslot, isReupload, approvalMessageId } = form.dataset;
+            const spot = spots.find(s => s.id === parseInt(spotId));
+            if (!spot) return;
+
+            const units = document.getElementById('units-used').value;
+            const imageFile = document.getElementById('usage-image').files[0];
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageDataURI = e.target.result;
+                
+                // For P2P spots, owner approves. For Public spots (ownerId: null), Admin (id: 1) approves.
+                const approverId = spot.ownerId || 1; 
+                const approver = users.find(u => u.id === approverId);
+
+                if (approver) {
+                    if (isReupload === 'true') {
+                        const messageToUpdate = approver.messages.find(m => m.messageId === parseFloat(approvalMessageId));
+                        if (messageToUpdate) {
+                            messageToUpdate.status = 'pending';
+                            messageToUpdate.units = units;
+                            messageToUpdate.imageName = imageFile.name;
+                            messageToUpdate.imageDataURI = imageDataURI;
+                            messageToUpdate.text = `[RE-SUBMITTED] Usage Report from ${currentUser.name} for '${spot.name}'. Units: ${units} kWh. Please review.`;
+                        }
+                    } else {
+                        const messageForApprover = {
+                            messageId: Date.now() + Math.random(), type: 'approval', status: 'pending', fromUserId: currentUser.id, fromUserName: currentUser.name, spotId: spot.id, spotName: spot.name, timeslot: timeslot, units: units, imageName: imageFile.name, imageDataURI: imageDataURI,
+                            text: `Usage Report from ${currentUser.name} for '${spot.name}'. Units: ${units} kWh. Please review.`
+                        };
+                        addMessage(messageForApprover, approver.id);
+                        spot.bookings[timeslot].approvalMessageId = messageForApprover.messageId;
+                    }
+                }
+                
+                spot.bookings[timeslot].sessionState = 'pending_approval';
+                addMessage({ text: `Your usage report for '${spot.name}' has been submitted for approval.` });
+                
+                closeModal('end-session-modal');
+                renderAll();
+            };
+            reader.readAsDataURL(imageFile);
+        }
+
+        function cancelBooking(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            if (spot && spot.bookings[timeslot]) {
+                addMessage({ text: `Your booking for '${spot.name}' at ${formatTime(timeslot)} has been cancelled.` });
+                delete spot.bookings[timeslot];
+                if (spot.queue[timeslot] && spot.queue[timeslot].length > 0) {
+                    processQueue(spot.id, timeslot);
+                }
+                renderAll();
+            }
+        }
+
+        function processQueue(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            const nextUserId = spot.queue[timeslot].shift(); 
+            if (nextUserId) {
+                const nextUser = users.find(u => u.id === nextUserId);
+                spot.bookings[timeslot] = { userId: nextUserId, sessionState: 'booked' };
+                if (nextUser) {
+                    const messageText = `Your turn! The spot '${spot.name}' for ${formatTime(timeslot)} is now available and has been booked for you.`;
+                    addMessage({ text: messageText }, nextUser.id);
+                }
+            }
+        }
+
+        function joinQueue(spotId, timeslot) {
+            const spot = spots.find(s => s.id === spotId);
+            if (spot) {
+                if (!spot.queue[timeslot]) spot.queue[timeslot] = [];
+                if (!spot.queue[timeslot].includes(currentUser.id)) {
+                    spot.queue[timeslot].push(currentUser.id);
+                    alert(`You have been added to the queue for "${spot.name}" for the slot ${formatTime(timeslot)}.`);
+                    if (document.getElementById('journey-modal').style.display === 'flex') closeModal('journey-modal');
+                    if (document.getElementById('booking-modal').style.display === 'flex') closeModal('booking-modal');
+                    renderAll();
+                } else {
+                    alert("You are already in the queue for this spot and time slot.");
+                }
+            }
+        }
+
+        function leaveQueue(spotId, timeslot) {
+             const spot = spots.find(s => s.id === spotId);
+             if (spot && spot.queue[timeslot]) {
+                spot.queue[timeslot] = spot.queue[timeslot].filter(userId => userId !== currentUser.id);
+                renderAll();
+             }
+        }
+
+        function addMessage(messageData, userId = null) {
+            const targetUser = userId ? users.find(u => u.id === userId) : currentUser;
+            if (targetUser) {
+                const message = {
+                    ...messageData,
+                    read: false,
+                    timestamp: new Date()
+                };
+                targetUser.messages.unshift(message);
+                if (targetUser.id === currentUser.id) { updateMessageBadge(); }
+            }
+        }
+        
+        function updateMessageBadge() {
+            if (!currentUser) return; const unreadMessages = currentUser.messages.filter(m => !m.read).length;
+            const badge = document.getElementById('message-badge');
+            if (unreadMessages > 0) { badge.textContent = unreadMessages; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+        }
+
+        function renderMessages() {
+            const list = document.getElementById('messages-list'); list.innerHTML = '';
+            if (currentUser.messages.length === 0) { list.innerHTML = '<p class="text-gray-500">You have no messages.</p>'; return; }
+            currentUser.messages.forEach((message) => {
+                let messageCard = '';
+                if (message.type === 'approval') {
+                    let buttonsHtml = '';
+                    const imageHtml = message.imageDataURI ? `<img src="${message.imageDataURI}" alt="Proof" class="mt-2 rounded-lg border w-32 h-32 object-cover">` : '';
+                    
+                    if (message.status === 'pending') {
+                        buttonsHtml = `<div class="flex space-x-2 mt-3"><button onclick="handleApproval('${message.messageId}', 'approved')" class="bg-green-500 text-white px-3 py-1 rounded-md text-sm hover:bg-green-600">Approve</button><button onclick="handleApproval('${message.messageId}', 'rejected')" class="bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600">Reject</button></div>`;
+                    } else if (message.status === 'approved') {
+                        buttonsHtml = `<div class="mt-3 text-sm font-semibold text-green-600">You approved this on ${new Date(message.timestamp).toLocaleDateString()}.</div>`;
+                    } else { // rejected
+                        buttonsHtml = `<div class="mt-3 text-sm font-semibold text-red-600">You rejected this on ${new Date(message.timestamp).toLocaleDateString()}.</div>`;
+                    }
+                    messageCard = `<div class="border-b pb-3 mb-3"><p class="font-semibold ${!message.read ? 'text-indigo-700' : 'text-gray-800'}">${message.text}</p>${imageHtml}<p class="text-xs text-gray-400 mt-1">Received: ${new Date(message.timestamp).toLocaleString()}</p>${buttonsHtml}</div>`;
+                } else {
+                    messageCard = `<div class="border-b pb-3 mb-3"><p class="font-semibold ${!message.read ? 'text-indigo-700' : 'text-gray-800'}">${message.text}</p><p class="text-xs text-gray-400 mt-1">${new Date(message.timestamp).toLocaleString()}</p></div>`;
+                }
+                list.insertAdjacentHTML('beforeend', messageCard);
+                message.read = true;
+            });
+            updateMessageBadge();
+        }
+
+        function handleApproval(messageId, decision) {
+            const message = currentUser.messages.find(m => m.messageId == messageId);
+            if (!message || message.status !== 'pending') return;
+            
+            const originalSender = users.find(u => u.id === message.fromUserId);
+            const spot = spots.find(s => s.id === message.spotId);
+            
+            if (decision === 'approved') {
+                const totalCost = parseFloat(message.units) * spot.rate;
+                if(originalSender.wallet >= totalCost) {
+                    originalSender.wallet -= totalCost;
+                    originalSender.points += 20;
+                    addMessage({ text: `Your report for '${message.spotName}' was approved. ₹${totalCost.toFixed(2)} was deducted from your wallet. You earned 20 points!` }, originalSender.id);
+                    delete spot.bookings[message.timeslot];
+                    message.status = 'approved';
+                } else {
+                    addMessage({ text: `Could not process payment for '${message.spotName}'. User has insufficient funds.`}, currentUser.id);
+                    addMessage({ text: `Your payment for '${message.spotName}' failed due to insufficient wallet balance. Please load your wallet.`}, originalSender.id);
+                    return; 
+                }
+            } else { // rejected
+                message.status = 'rejected';
+                if(spot && spot.bookings[message.timeslot]) {
+                   spot.bookings[message.timeslot].sessionState = 'rejected';
+                }
+                addMessage({ text: `Your usage report for '${message.spotName}' was rejected. Please re-upload with correct information.` }, originalSender.id);
+            }
+            
+            if(currentUser.id === originalSender.id) {
+                updateWalletDisplay();
+            }
+            renderMessages();
+            renderAll();
+        }
+
+
+        function deleteListing(spotId) { if (confirm('Are you sure you want to delete this listing?')) { spots = spots.filter(s => s.id !== spotId); renderAll(); } }
+        function approveSpot(spotId) { const spot = spots.find(s => s.id === spotId); if (spot) { spot.approval = 'approved'; renderAdminView(); } }
+        function rejectSpot(spotId) { if (confirm('Are you sure you want to reject and delete this listing?')) { spots = spots.filter(s => s.id !== spotId); renderAdminView(); } }
+
+        // --- Wallet Functions ---
+        function updateWalletDisplay(){
+            if(currentUser && !currentUser.isAdmin) {
+                document.getElementById('wallet-balance').textContent = `₹${currentUser.wallet.toFixed(2)}`;
+            }
+        }
+        function loadWallet() {
+            const amount = parseFloat(prompt("Enter amount to add to your wallet:", "1000"));
+            if (!isNaN(amount) && amount > 0) {
+                currentUser.wallet += amount;
+                alert(`₹${amount.toFixed(2)} added successfully. Your new balance is ₹${currentUser.wallet.toFixed(2)}.`);
+                updateWalletDisplay();
+                renderAll();
+            } else {
+                alert("Invalid amount entered.");
+            }
+        }
+        function checkAndToggleLowBalanceOverlay() {
+            const overlay = document.getElementById('low-balance-overlay');
+            if (currentUser.wallet < MIN_WALLET_BALANCE) {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+        function calculateCommittedFunds() {
+            let totalCommitted = 0;
+            if (!currentUser) return 0;
+            spots.forEach(spot => {
+                Object.entries(spot.bookings).forEach(([timeslot, bookingDetails]) => {
+                    if (bookingDetails.userId === currentUser.id && ['booked', 'active'].includes(bookingDetails.sessionState)) {
+                        if (timeslot === 'overnight') {
+                            totalCommitted += spot.overnightRate || 0;
+                        } else if (spot.chargerType === 'None') {
+                            totalCommitted += spot.rate;
+                        } else {
+                            totalCommitted += spot.rate * 40;
+                        }
+                    }
+                });
+                Object.entries(spot.queue).forEach(([timeslot, queueList]) => {
+                    if (queueList.includes(currentUser.id)) {
+                        if (timeslot === 'overnight') {
+                            totalCommitted += spot.overnightRate || 0;
+                        } else if (spot.chargerType === 'None') {
+                            totalCommitted += spot.rate;
+                        } else {
+                            totalCommitted += spot.rate * 40;
+                        }
+                    }
+                });
+            });
+            return totalCommitted;
+        }
+        
+        document.getElementById('search-form').addEventListener('submit', function(e) { e.preventDefault(); renderAvailableSpots(document.getElementById('search-input').value); });
+        
+        document.getElementById('add-charger-type').addEventListener('change', function(e) { const priceLabel = document.getElementById('price-label'); const priceInput = document.getElementById('add-price'); if (e.target.value === 'None') { priceLabel.textContent = 'Rate per hour (₹)'; priceInput.placeholder = 'e.g., 50'; } else { priceLabel.textContent = 'Rate per kWh (₹)'; priceInput.placeholder = 'e.g., 18'; } });
+        document.getElementById('add-spot-form').addEventListener('submit', function(e) { e.preventDefault(); const formData = new FormData(e.target); const newSpot = { id: spots.length + Math.random(), name: formData.get('name'), address: formData.get('address'), rate: parseFloat(formData.get('rate')), overnightRate: parseFloat(formData.get('overnightRate')) || null, chargerType: formData.get('chargerType'), vehicleType: formData.get('vehicleType'), status: 'Available', type: 'P2P', ownerId: currentUser.id, approval: 'pending', bookings: {}, queue: {} }; spots.push(newSpot); renderMyListedSpots(); alert('Your spot has been submitted for approval!'); e.target.reset(); document.getElementById('price-label').textContent = 'Rate per hour (₹)'; });
+        
+        function toggleChatbot() { document.getElementById('chatbot-window').classList.toggle('hidden'); }
+        function renderChatbotQuestions() { const container = document.getElementById('chat-questions'); container.innerHTML = chatbotQuestions.map(item => `<button onclick="showChatbotAnswer('${item.answer.replace(/'/g, "\\'")}')" class="w-full text-left text-sm p-2 bg-gray-100 hover:bg-blue-100 rounded-md transition mb-1">${item.question}</button>`).join(''); }
+        function showChatbotAnswer(answer) { const messagesContainer = document.getElementById('chat-messages'); messagesContainer.insertAdjacentHTML('beforeend', `<div class="bg-indigo-800 text-white p-3 rounded-lg self-end max-w-xs fade-in"><p class="text-sm">${answer}</p></div>`); messagesContainer.scrollTop = messagesContainer.scrollHeight; }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            document.getElementById('end-session-form').addEventListener('submit', handleEndSessionSubmit);
+            switchView('login'); 
+            renderChatbotQuestions(); 
+        });
+    </script>
+</body>
+</html>
