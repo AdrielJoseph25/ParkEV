@@ -1,4 +1,58 @@
-# ParkEV
-ParkEV: A smart parking and EV charging platform prototype.
+# ⚡ ParkEV  
 
-Built with vanilla JavaScript and TailwindCSS, this demo includes the following core features: - User/Admin authentication -Dashboard for searching and booking spots - P2P spot listing and admin approval workflow - Booking modal with time slots and a queuing system - User wallet with minimum balance enforcement - "JourneyIQ" route planner for EV range - Session management (start/end) with image proof and billing approval - Profile management and rewards system
+A smart parking and EV charging platform prototype designed to simplify parking discovery, booking, and EV route planning.  
+
+---
+
+## ⚙️ Technologies  
+- JavaScript (Vanilla)  
+- Tailwind CSS  
+
+---
+
+## ✨ Features  
+
+Here’s what you can do with ParkEV:  
+
+- **User/Admin Authentication:** Secure login system  
+- **Dashboard:** Search and book parking spots  
+- **P2P Listing:** Users can list parking spaces with admin approval  
+- **Booking System:** Time slot selection with queuing support  
+- **Wallet System:** Minimum balance enforcement for bookings  
+- **Route Planner:** "JourneyIQ" for EV range planning  
+- **Session Management:** Start/end sessions with image proof and billing approval  
+- **Profile System:** User profiles with rewards  
+
+---
+
+## 🧠 The Process  
+
+- Built a frontend-focused prototype using JavaScript and Tailwind CSS  
+- Designed user and admin workflows for parking management  
+- Implemented booking logic with time slots and queue handling  
+- Simulated EV route planning and wallet-based transactions  
+- Focused on real-world usability and system flow  
+
+---
+
+## 📚 What I Learned  
+
+- Designing user-centric systems and workflows  
+- Handling booking logic and queue-based systems  
+- Building scalable UI with Tailwind CSS  
+- Structuring real-world applications like EV ecosystems  
+
+---
+
+## 🚀 How to Run  
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/ParkEV.git
+
+# Navigate to project folder
+cd ParkEV
+```
+
+- Open the project folder  
+- Run `index.html` in your browser  
